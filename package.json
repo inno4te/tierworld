@@ -1,0 +1,19 @@
+{
+  "name": "berean-school",
+  "version": "1.0.0",
+  "description": "The Berean School — Christian Apologetics focused on Islam",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Static site — no build step required'",
+    "sync": "npx cap sync android",
+    "open:android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  },
+  "license": "MIT"
+}
