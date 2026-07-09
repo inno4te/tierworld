@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:   # allows manual trigger from the GitHub Actions UI
+  workflow_dispatch:
 
 jobs:
   build-apk:
@@ -12,64 +12,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Check out the repo ─────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Set up Node (for Capacitor CLI) ───────────────────────────────
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      # ── 3. Set up Java (required by Android Gradle build) ────────────────
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
-      # ── 4. Set up Android SDK ─────────────────────────────────────────────
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # ── 5. Install Node dependencies ──────────────────────────────────────
       - name: Install npm dependencies
-        run: npm ci
+        run: npm install
 
-      # ── 6. Add the Android platform (first run only; idempotent) ─────────
       - name: Add Capacitor Android platform
         run: |
           npx cap add android || echo "Android platform already added"
 
-      # ── 7. Sync web assets into the Android project ───────────────────────
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # ── 8. Make Gradle wrapper executable ────────────────────────────────
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # ── 9. Build debug APK ────────────────────────────────────────────────
-      #    (debug APK can be installed directly on any Android device with
-      #     "Install from unknown sources" enabled — no signing key needed)
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
-      # ── 10. Upload APK as a downloadable GitHub Actions artifact ──────────
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: berean-school-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30   # artifact stays downloadable for 30 days
+          retention-days: 30
 
-      # ── 11. (Optional) Create a GitHub Release on version tags ────────────
-      #    Tag your commit like: git tag v1.0.0 && git push --tags
-      #    GitHub will create a Release and attach the APK automatically.
       - name: Upload APK to GitHub Release (on version tag)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
@@ -77,16 +60,7 @@ jobs:
           files: android/app/build/outputs/apk/debug/app-debug.apk
           name: "Berean School ${{ github.ref_name }}"
           body: |
-            ## The Berean School — ${{ github.ref_name }}
-
-            ### Install on Android
-            1. Download `app-debug.apk` below
-            2. Transfer to your Android device
-            3. Enable **Settings → Security → Install from unknown sources**
-            4. Tap the APK file to install
-
-            ### Login
-            - **Username:** tierworld
-            - **Password:** tierw0rld
+            Download app-debug.apk and install on Android.
+            Username: tierworld / Password: tierw0rld
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
